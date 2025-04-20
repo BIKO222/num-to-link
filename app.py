@@ -1,20 +1,19 @@
-import os
-from dotenv import load_dotenv
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import urllib.parse
+from dotenv import load_dotenv
+import os
 
-# Загружаем переменные окружения из .env файла
+# Загрузка токена из .env
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 
-# Функция для обработки сообщений
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# Обработка сообщений с номером и текстом
+def handle_message(update, context):
     text = update.message.text.strip()
     parts = text.split(maxsplit=1)
 
     if not parts:
-        await update.message.reply_text("Отправь номер телефона.")
+        update.message.reply_text("Отправь номер телефона.")
         return
 
     digits = ''.join(filter(str.isdigit, parts[0]))
@@ -25,24 +24,25 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             link = f"https://wa.me/{digits}?text={message_text}"
         else:
             link = f"https://wa.me/{digits}"
-
-        await update.message.reply_text(f"Ссылка на WhatsApp:\n{link}")
+        update.message.reply_text(f"Ссылка на WhatsApp:\n{link}")
     else:
-        await update.message.reply_text("Пожалуйста, отправь номер в формате +7 700 123 4567 или просто цифрами.")
+        update.message.reply_text("Пожалуйста, отправь номер в формате +7 700 123 4567 или просто цифрами.")
 
-# Стартовая команда
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Привет! Отправь мне номер телефона (и по желанию сообщение), и я сделаю ссылку WhatsApp.")
+# Команда /start
+def start(update, context):
+    update.message.reply_text("Привет! Отправь мне номер телефона (и по желанию сообщение), и я сделаю ссылку WhatsApp.")
 
 # Запуск бота
 def main():
-    app = ApplicationBuilder().token(TOKEN).build()
+    updater = Updater(token=TOKEN, use_context=True)
+    dp = updater.dispatcher
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
 
     print("Бот запущен...")
-    app.run_polling()
+    updater.start_polling()
+    updater.idle()
 
 if __name__ == "__main__":
     main()

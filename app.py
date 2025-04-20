@@ -1,28 +1,36 @@
+import asyncio
 import os
-from aiogram import Bot, Dispatcher, types
-from aiogram import F  # Import F for filters in aiogram v3.x
-from aiogram.utils import executor
-from dotenv import load_dotenv
 import urllib.parse
+from aiogram import Bot, Dispatcher, F
+from aiogram.enums import ParseMode
+from aiogram.types import Message
+from aiogram.filters import CommandStart
+from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Загрузка переменных окружения из .env
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 
-# Initialize bot and dispatcher
-bot = Bot(token=TOKEN)
+# Инициализация бота и диспетчера
+bot = Bot(token=TOKEN, parse_mode=ParseMode.HTML)
 dp = Dispatcher()
 
-@dp.message_handler(commands=['start'])
-async def start(message: types.Message):
-    await message.reply("Привет! Отправь мне номер телефона (и по желанию сообщение), и я сделаю ссылку WhatsApp.")
+# Обработка команды /start
+@dp.message(CommandStart())
+async def start(message: Message):
+    await message.answer(
+        "👋 Привет! Отправь мне <b>номер телефона</b> (и по желанию сообщение), "
+        "и я сгенерирую ссылку WhatsApp 📱."
+    )
 
-@dp.message_handler(lambda message: message.text)
-async def handle_message(message: types.Message):
+# Обработка текстовых сообщений
+@dp.message(F.text)
+async def handle_message(message: Message):
     text = message.text.strip()
     parts = text.split(maxsplit=1)
+
     if not parts:
-        await message.reply("Отправь номер телефона.")
+        await message.answer("❗ Пожалуйста, отправь номер телефона.")
         return
 
     digits = ''.join(filter(str.isdigit, parts[0]))
@@ -34,9 +42,15 @@ async def handle_message(message: types.Message):
         else:
             link = f"https://wa.me/{digits}"
 
-        await message.reply(f"Ссылка на WhatsApp:\n{link}")
+        await message.answer(f"✅ Ссылка на WhatsApp:\n{link}")
     else:
-        await message.reply("Пожалуйста, отправь номер в формате +7 700 123 4567 или просто цифрами.")
+        await message.answer("⚠️ Отправь номер в формате +7 700 123 4567 или просто цифрами.")
 
-if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+# Главная функция запуска бота
+async def main():
+    print("🤖 Бот запущен...")
+    await dp.start_polling(bot)
+
+# Точка входа
+if __name__ == "__main__":
+    asyncio.run(main())

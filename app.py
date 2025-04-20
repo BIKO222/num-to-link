@@ -1,20 +1,33 @@
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-import urllib.parse
 import os
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import ParseMode
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.utils import executor
 from dotenv import load_dotenv
+import urllib.parse
 
+# Загружаем токен из .env
 load_dotenv()
+TOKEN = os.getenv("BOT_TOKEN")
 
-TOKEN = os.getenv("BOT_TOKEN")  # Храним токен в .env
+# Создаем экземпляры бота и диспетчера
+bot = Bot(token=TOKEN)
+dp = Dispatcher(bot)
+dp.middleware.setup(LoggingMiddleware())
 
-# Функция для обработки сообщений
-def handle_message(update: Update, context: CallbackContext):
-    text = update.message.text.strip()
+# Стартовая команда
+@dp.message_handler(commands=['start'])
+async def start(message: types.Message):
+    await message.reply("Привет! Отправь мне номер телефона (и по желанию сообщение), и я сделаю ссылку WhatsApp.")
+
+# Обработка текстовых сообщений
+@dp.message_handler(lambda message: message.text)
+async def handle_message(message: types.Message):
+    text = message.text.strip()
 
     parts = text.split(maxsplit=1)
     if not parts:
-        update.message.reply_text("Отправь номер телефона.")
+        await message.reply("Отправь номер телефона.")
         return
 
     digits = ''.join(filter(str.isdigit, parts[0]))
@@ -26,25 +39,9 @@ def handle_message(update: Update, context: CallbackContext):
         else:
             link = f"https://wa.me/{digits}"
 
-        update.message.reply_text(f"Ссылка на WhatsApp:\n{link}")
+        await message.reply(f"Ссылка на WhatsApp:\n{link}")
     else:
-        update.message.reply_text("Пожалуйста, отправь номер в формате +7 700 123 4567 или просто цифрами.")
+        await message.reply("Пожалуйста, отправь номер в формате +7 700 123 4567 или просто цифрами.")
 
-# Стартовая команда
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Привет! Отправь мне номер телефона (и по желанию сообщение), и я сделаю ссылку WhatsApp.")
-
-# Основная функция
-def main():
-    updater = Updater(token=TOKEN, use_context=True)
-    dp = updater.dispatcher
-
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
-
-    print("Бот запущен...")
-    updater.start_polling()
-    updater.idle()
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)

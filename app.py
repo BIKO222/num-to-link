@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 
 # Загрузка переменных окружения из .env
 load_dotenv()
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = "8043279548:AAGh2xyzSkdqUwSO-6fTKvNxQ1choPdwyPg"
+
 
 # Инициализация бота и диспетчера
 bot = Bot(token=TOKEN, parse_mode=ParseMode.HTML)

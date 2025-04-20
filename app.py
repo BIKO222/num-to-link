@@ -1,17 +1,18 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import urllib.parse
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
-# Загрузка токена из .env
 load_dotenv()
-TOKEN = os.getenv("BOT_TOKEN")
 
-# Обработка сообщений с номером и текстом
-def handle_message(update, context):
+TOKEN = os.getenv("BOT_TOKEN")  # Храним токен в .env
+
+# Функция для обработки сообщений
+def handle_message(update: Update, context: CallbackContext):
     text = update.message.text.strip()
-    parts = text.split(maxsplit=1)
 
+    parts = text.split(maxsplit=1)
     if not parts:
         update.message.reply_text("Отправь номер телефона.")
         return
@@ -24,15 +25,16 @@ def handle_message(update, context):
             link = f"https://wa.me/{digits}?text={message_text}"
         else:
             link = f"https://wa.me/{digits}"
+
         update.message.reply_text(f"Ссылка на WhatsApp:\n{link}")
     else:
         update.message.reply_text("Пожалуйста, отправь номер в формате +7 700 123 4567 или просто цифрами.")
 
-# Команда /start
-def start(update, context):
+# Стартовая команда
+def start(update: Update, context: CallbackContext):
     update.message.reply_text("Привет! Отправь мне номер телефона (и по желанию сообщение), и я сделаю ссылку WhatsApp.")
 
-# Запуск бота
+# Основная функция
 def main():
     updater = Updater(token=TOKEN, use_context=True)
     dp = updater.dispatcher

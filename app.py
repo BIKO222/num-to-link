@@ -1,22 +1,22 @@
 import os
 from aiogram import Bot, Dispatcher, types
-from aiogram.enums import ParseMode
-from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram import F  # Import F for filters in aiogram v3.x
 from aiogram.utils import executor
 from dotenv import load_dotenv
 import urllib.parse
 
-
+# Load environment variables from .env file
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 
+# Initialize bot and dispatcher
 bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
-dp.middleware.setup(LoggingMiddleware())
+dp = Dispatcher()
 
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     await message.reply("Привет! Отправь мне номер телефона (и по желанию сообщение), и я сделаю ссылку WhatsApp.")
+
 @dp.message_handler(lambda message: message.text)
 async def handle_message(message: types.Message):
     text = message.text.strip()
